@@ -197,4 +197,101 @@ class HomeController
         header('Location: ' . BASE_URL . '?action=cart-list');
         exit;
     }
+
+    public function checkout()
+    {
+        // Kiểm tra đăng nhập
+        if (!isset($_SESSION['user'])) {
+            header('Location: ' . BASE_URL . '?action=login');
+            exit;
+        }
+
+        $user_id = $_SESSION['user']['id'];
+        
+        // Lấy thông tin user
+        $userModel = new User();
+        $userData = $userModel->getById($user_id);
+
+        // lấy giỏ hàng
+        $cartModel = new Cart();
+        $cartData = $cartModel->findCartByUserId($user_id);
+
+        if (!$cartData) {
+            $_SESSION['message'] = 'Giỏ hàng trống';
+            header('Location: ' . BASE_URL . '?action=cart-list');
+            exit;
+        }
+
+        // lấy sản phẩm trong giỏ
+        $cartDetailModel = new CartDetail();
+        $cartDetailData = $cartDetailModel->findCartDetailByCartId($cartData['id']);
+
+        // kiểm tra giỏ hàng có sản phẩm không
+        if (empty($cartDetailData)) {
+            $_SESSION['message'] = 'Giỏ hàng trống';
+            header('Location: ' . BASE_URL . '?action=cart-list');
+            exit;
+        }
+
+        // xử lý khi submit form
+        $method = $_SERVER['REQUEST_METHOD'];
+        if ($method == 'POST') {
+            $customer_name = $_POST['customer_name'];
+            $customer_phone = $_POST['customer_phone'];
+            $customer_address = $_POST['customer_address'];
+
+            // tính tổng tiền
+            $total_amount = 0;
+            foreach ($cartDetailData as $item) {
+                $total_amount += $item['price'] * $item['quantity'];
+            }
+
+            // tạo đơn hàng
+            $orderModel = new Order();
+            $order_id = $orderModel->createOrder($user_id, $total_amount, $customer_name, $customer_phone, $customer_address);
+
+            // Tạo chi tiết đơn hàng
+            $orderDetailModel = new OrderDetail();
+            foreach ($cartDetailData as $item) {
+                $orderDetailModel->createOrderDetail($order_id, $item['product_id'], $item['quantity'], $item['price']);
+            }
+
+            // xóa giỏ hàng sau khi đặt hàng
+            $pdo = $cartModel->getConnection();
+            $sql = "DELETE FROM cart_detail WHERE cart_id = ?";
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute([$cartData['id']]);
+
+            $_SESSION['message'] = 'Đặt hàng thành công! Mã đơn hàng: #' . $order_id;
+            header('Location: ' . BASE_URL);
+            exit;
+        }
+
+        $title = 'Thanh toán';
+        $view = 'checkout.php';
+        $data = [
+            'user' => $userData,
+            'cartDetail' => $cartDetailData
+        ];
+        require_once PATH_VIEW_MAIN;
+    }
+
+    public function myOrders()
+    {
+        // Kiểm tra đăng nhập
+        if (!isset($_SESSION['user'])) {
+            header('Location: ' . BASE_URL . '?action=login');
+            exit;
+        }
+
+        $title = 'Đơn hàng của tôi';
+        $view = 'my-orders.php';
+        
+        $user_id = $_SESSION['user']['id'];
+        $orderModel = new Order();
+        $data = $orderModel->getOrdersByUserId($user_id);
+        
+        require_once PATH_VIEW_MAIN;
+    }
+
 }

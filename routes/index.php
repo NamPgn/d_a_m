@@ -3,7 +3,7 @@ $action = $_GET['action'] ?? '/';
 
 match ($action) {
   '/' => (new HomeController())->index(),
-   'product-detail' => (new HomeController())->productDetail(),
+  'product-detail' => (new HomeController())->productDetail(),
 
   'login' => (new HomeController())->login(),
   'register' => (new HomeController())->register(),
@@ -11,6 +11,8 @@ match ($action) {
   'check-cart-quantity' => (new HomeController())->checkCartQuantity(),
   'cart-list' => (new HomeController())->cartList(),
   'cart-delete' => (new HomeController())->cartDelete(),
+  'checkout' => (new HomeController())->checkout(),
+  'my-orders' => (new HomeController())->myOrders(),
 
   //admin
   'admin' => (new DashboardController())->index(),
@@ -29,4 +31,6 @@ match ($action) {
   'admin-users-add' => (new UserController())->userAdd(),
   'admin-users-edit' => (new UserController())->userEdit(),
   'admin-users-delete' => (new UserController())->userDelete(),
+
+  'admin-orders' => (new OrderController())->orders(),
 };

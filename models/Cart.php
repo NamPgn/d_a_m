@@ -37,4 +37,9 @@ class Cart
     $stmt->execute([$cart_id]);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
+
+  public function getConnection()
+  {
+    return $this->pdo;
+  }
 }
