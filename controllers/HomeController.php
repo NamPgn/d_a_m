@@ -6,9 +6,15 @@ class HomeController
         $title = 'Trang chủ';
         $view = 'home.php';
         $product = new Product();
-        $products = $product->getAll();
+        $category = new Category();
+        $categories = $category->getAll();
+        $keyword = $_GET['keyword'] ?? null;
+        $category_id = $_GET['category_id'] ?? null;
+        $products = $product->getAll($keyword, $category_id);
+
         require_once PATH_VIEW_MAIN;
     }
+
 
     public function productDetail()
     {
@@ -207,7 +213,7 @@ class HomeController
         }
 
         $user_id = $_SESSION['user']['id'];
-        
+
         // Lấy thông tin user
         $userModel = new User();
         $userData = $userModel->getById($user_id);
@@ -286,12 +292,11 @@ class HomeController
 
         $title = 'Đơn hàng của tôi';
         $view = 'my-orders.php';
-        
+
         $user_id = $_SESSION['user']['id'];
         $orderModel = new Order();
         $data = $orderModel->getOrdersByUserId($user_id);
-        
+
         require_once PATH_VIEW_MAIN;
     }
-
 }
